@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+            id="org.alonamir.webview-cache-manager"
+            version="1.0.0">
+        <name>WebviewCacheManager</name>
+        <description>Helps you delete Application Cache, Browser Cache, Cookies.</description>
+        <license>Alon Amir</license>
+        <keywords>cordova,appcache,app,cache,application,web,view,webview,cookies,cookie</keywords>
+        <js-module src="www/WebviewCacheManager.js" name="WebviewCacheManager">
+            <clobbers target="WebviewCacheManager" />
+        </js-module>
+
+        <platform name="android">
+
+        	<config-file target="config.xml" parent="/*">
+            	<feature name="WebviewCacheManager">
+                	<param name="android-package" value="org.alonamir.cache.WebviewCacheManager"/>
+            	</feature>
+        	</config-file>
+
+            <source-file src="android/src/org/alonamir/cache/WebviewCacheManager.java" target-dir="src/org/alonamir/cache" />
+
+        </platform>
+
+        <platform name="ios">
+
+        	<config-file target="config.xml" parent="/*">
+				<feature name="WebviewCacheManager">
+					<param name="ios-package" value="WebviewCacheManager"/>
+				</feature>
+			</config-file>
+
+            <framework src="libsqlite3.tbd" />
+
+			<source-file src="ios/src/WebviewCacheManager.m" />
+			<header-file src="ios/src/WebviewCacheManager.h" />
+
+        </platform>
+
+    </plugin>
