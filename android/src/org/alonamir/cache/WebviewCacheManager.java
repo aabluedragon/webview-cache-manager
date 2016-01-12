@@ -43,9 +43,9 @@ public class WebviewCacheManager extends CordovaPlugin {
 
     static String getWebViewPath(CordovaInterface cordova) {
         if(webViewKind == WebViewKind.Crosswalk) {
-            return cordova.getActivity().getApplicationContext().getDir("xwalkcore", 0).getPath() + "/Default/Application Cache";
+            return cordova.getActivity().getApplicationContext().getDir("xwalkcore", 0).getPath() + "/Default";
         } else {
-            return cordova.getActivity().getApplicationContext().getDir("webview", 0).getPath() + "/Application Cache";
+            return cordova.getActivity().getApplicationContext().getDir("webview", 0).getPath();
         }
     }
 
@@ -93,8 +93,14 @@ public class WebviewCacheManager extends CordovaPlugin {
         });
 
         cordovaMethods.put("clearBrowserCache", new CordovaCall() {
-            @Override public void execute(JSONArray data, final CallbackContext callbackContext, CordovaInterface cordova) {
+            @Override public void execute(JSONArray data, final CallbackContext callbackContext, final CordovaInterface cordova) {
                 try {
+                    if(webViewKind==WebViewKind.Crosswalk) {
+                        String path = getWebViewPath(cordova)+ "/Cache";
+                        File c = new File(path);
+                        deleteRecursive(c);
+                    }
+
                     final CordovaWebView webView = (CordovaWebView) appViewField.get(cordova.getActivity());
                     Handler mainHandler = new Handler(cordova.getActivity().getMainLooper());
                     final Looper myLooper = Looper.myLooper();
@@ -110,7 +116,6 @@ public class WebviewCacheManager extends CordovaPlugin {
                             });
                         }
                     });
-
                 } catch (Throwable e) {
                     callbackContext.error(e.getMessage());
                 }
@@ -130,7 +135,7 @@ public class WebviewCacheManager extends CordovaPlugin {
             @Override
             public void execute(JSONArray data, final CallbackContext callbackContext, CordovaInterface cordova) {
                 try {
-                    String path = getWebViewPath(cordova);
+                    String path = getWebViewPath(cordova)+ "/Application Cache";
                     File c = new File(path);
                     deleteRecursive(c);
                     callbackContext.success();
