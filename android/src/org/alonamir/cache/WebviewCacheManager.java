@@ -22,21 +22,43 @@ import android.webkit.ValueCallback;
 public class WebviewCacheManager extends CordovaPlugin {
 
     private static Field appViewField;
+    private static WebViewKind webViewKind;
 
-	private interface CordovaCall {
-		void execute(JSONArray data, CallbackContext callbackContext, CordovaInterface cordova);
-	}
+    private interface CordovaCall {
+        void execute(JSONArray data, CallbackContext callbackContext, CordovaInterface cordova);
+    }
 
-	static boolean deleteRecursive(File fileOrDirectory) {
-		if (fileOrDirectory.isDirectory())
-			for (File child : fileOrDirectory.listFiles())
-				deleteRecursive(child);
+    enum WebViewKind {
+        BuiltIn,
+        Crosswalk
+    }
 
-		return fileOrDirectory.delete();
-	}
+    static boolean deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                deleteRecursive(child);
 
-	static Map<String, CordovaCall> cordovaMethods = new HashMap<String, CordovaCall>();
-	static {
+        return fileOrDirectory.delete();
+    }
+
+    static String getWebViewPath(CordovaInterface cordova) {
+        if(webViewKind == WebViewKind.Crosswalk) {
+            return cordova.getActivity().getApplicationContext().getDir("xwalkcore", 0).getPath() + "/Default/Application Cache";
+        } else {
+            return cordova.getActivity().getApplicationContext().getDir("webview", 0).getPath() + "/Application Cache";
+        }
+    }
+
+    @Override
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        File xwalkDir = cordova.getActivity().getApplicationContext().getDir("xwalkcore", 0);
+        webViewKind = xwalkDir.exists()? WebViewKind.Crosswalk:WebViewKind.BuiltIn;
+
+        super.initialize(cordova, webView);
+    }
+
+    static Map<String, CordovaCall> cordovaMethods = new HashMap<String, CordovaCall>();
+    static {
 
         try {
             Class<?> cdvActivityClass = CordovaActivity.class;
@@ -47,10 +69,10 @@ public class WebviewCacheManager extends CordovaPlugin {
             e.printStackTrace();
         }
 
-		cordovaMethods.put("clearCookies", new CordovaCall() {
-			@SuppressLint("NewApi")
-			@SuppressWarnings("deprecation")
-			@Override public void execute(JSONArray data, final CallbackContext callbackContext, CordovaInterface cordova) {
+        cordovaMethods.put("clearCookies", new CordovaCall() {
+            @SuppressLint("NewApi")
+            @SuppressWarnings("deprecation")
+            @Override public void execute(JSONArray data, final CallbackContext callbackContext, CordovaInterface cordova) {
                 try {
                     int apiLevel = Build.VERSION.SDK_INT;
                     if(apiLevel >= 21){
@@ -67,10 +89,10 @@ public class WebviewCacheManager extends CordovaPlugin {
                 } catch(Exception e) {
                     callbackContext.error(e.getMessage());
                 }
-			}
-		});
+            }
+        });
 
-		cordovaMethods.put("clearBrowserCache", new CordovaCall() {
+        cordovaMethods.put("clearBrowserCache", new CordovaCall() {
             @Override public void execute(JSONArray data, final CallbackContext callbackContext, CordovaInterface cordova) {
                 try {
                     final CordovaWebView webView = (CordovaWebView) appViewField.get(cordova.getActivity());
@@ -102,11 +124,13 @@ public class WebviewCacheManager extends CordovaPlugin {
             }
         });
 
+
+
         cordovaMethods.put("clearAllAppCache", new CordovaCall() {
             @Override
             public void execute(JSONArray data, final CallbackContext callbackContext, CordovaInterface cordova) {
                 try {
-                    String path = cordova.getActivity().getApplicationContext().getDir("webview", 0).getPath() + "/Application Cache";
+                    String path = getWebViewPath(cordova);
                     File c = new File(path);
                     deleteRecursive(c);
                     callbackContext.success();
@@ -117,17 +141,17 @@ public class WebviewCacheManager extends CordovaPlugin {
             }
         });
 
-	}
+    }
 
-	@Override
-	public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
-  		CordovaCall cordovaCall = cordovaMethods.get(action);
-		if(cordovaCall != null) {
-			cordovaCall.execute(data, callbackContext, cordova);
-			return true;
-		}
+    @Override
+    public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
+        CordovaCall cordovaCall = cordovaMethods.get(action);
+        if(cordovaCall != null) {
+            cordovaCall.execute(data, callbackContext, cordova);
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
 }
