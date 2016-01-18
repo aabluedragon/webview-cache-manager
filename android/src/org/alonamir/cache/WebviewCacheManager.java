@@ -95,11 +95,11 @@ public class WebviewCacheManager extends CordovaPlugin {
         cordovaMethods.put("clearBrowserCache", new CordovaCall() {
             @Override public void execute(JSONArray data, final CallbackContext callbackContext, final CordovaInterface cordova) {
                 try {
-                    if(webViewKind==WebViewKind.Crosswalk) {
+                    try{
                         String path = getWebViewPath(cordova)+ "/Cache";
                         File c = new File(path);
                         deleteRecursive(c);
-                    }
+                    } catch(Exception ignore) {}
 
                     final CordovaWebView webView = (CordovaWebView) appViewField.get(cordova.getActivity());
                     Handler mainHandler = new Handler(cordova.getActivity().getMainLooper());
